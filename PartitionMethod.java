@@ -76,20 +76,34 @@ public class PartitionMethod
     for(int state2 = states - 1; state2 > 0; state2--)
       for(int state1 = 0; state1 < state2; state1++)
         for(int output = 0; output < outputs; output++)
-          if(outputsMatrix[state1][output] != outputsMatrix[state2][output])
+          if(outputsMatrix[state1][output] != outputsMatrix[state2][output]) {
             implicationChart[implicationChartRowIndex(state2, states)][state1] = INCOMPATIBLE;
+          }
 
     if(mode == GUIDED) guidedMode(states, implicationChart);
 
-    for(int state2 = states - 1; state2 > 0; state2--)
-      for(int state1 = 0; state1 < state2; state1++)
-        if(implicationChart[implicationChartRowIndex(state2, states)][state1] == UNKNOWN) {
-          for(int input = 0; input < inputs; input++)
-            if(implicationChart[implicationChartRowIndex(nextStatesMatrix[state2][input], states)][nextStatesMatrix[state1][input]] == INCOMPATIBLE) {
-              implicationChart[implicationChartRowIndex(state2, states)][state1] = INCOMPATIBLE;
-              break;
+    boolean restart = true, changed;
+    while(restart) {
+      changed = false;
+      for(int state2 = states - 1; state2 > 0; state2--) {
+        for(int state1 = 0; state1 < state2; state1++)
+          if(implicationChart[implicationChartRowIndex(state2, states)][state1] == UNKNOWN)
+            for(int input = 0; input < inputs; input++) {
+              if(implicationChart[implicationChartRowIndex(nextStatesMatrix[state2][input], states)][nextStatesMatrix[state1][input]] == INCOMPATIBLE) {
+                implicationChart[implicationChartRowIndex(state2, states)][state1] = INCOMPATIBLE;
+                changed = true;
+                break;
+              }
+              if(implicationChart[implicationChartRowIndex(nextStatesMatrix[state1][input], states)][nextStatesMatrix[state2][input]] == INCOMPATIBLE) {
+                implicationChart[implicationChartRowIndex(state2, states)][state1] = INCOMPATIBLE;
+                changed = true;
+                break;
+              }
             }
-        }
+        if(state2 == 1 && !changed)
+          restart = false;
+      }
+    }
 
     for(int state1 = 0; state1 < states; state1++)
       for(int state2 = 0; state2 < states; state2++)
@@ -97,8 +111,6 @@ public class PartitionMethod
           implicationChart[state2][state1] = COMPATIBLE;
 
     if(mode == GUIDED) guidedMode(states, implicationChart);
-
-
 
     answer(states, implicationChart);
   }

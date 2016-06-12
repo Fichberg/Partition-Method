@@ -5,8 +5,7 @@ JC = javac
 	$(JC) $(JFLAGS) $*.java
 
 CLASSES = \
-	PartitionMethod.java \
-	Partition.java
+	PartitionMethod.java
 default: classes
 classes: $(CLASSES:.java=.class)
 clean:
