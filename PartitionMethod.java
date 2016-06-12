@@ -8,6 +8,9 @@ public class PartitionMethod
 {
   private static final char NORMAL = 's';
   private static final char GUIDED = 'g';
+  private static final int INCOMPATIBLE = 0;
+  private static final int COMPATIBLE = 1;
+  private static final int UNKNOWN = 2;
 
   public static void main(String[] args)
   {
@@ -62,7 +65,99 @@ public class PartitionMethod
       row++;
     }
 
+    int[][] implicationChart = new int[states][states];
+    for(int state1 = 0; state1 < states; state1++)
+      for(int state2 = 0; state2 < states; state2++)
+        implicationChart[state2][state1] = UNKNOWN;
 
+    if(mode == GUIDED) guidedMode(states, implicationChart);
+
+    //do partition based on outputs
+    for(int state2 = states - 1; state2 > 0; state2--)
+      for(int state1 = 0; state1 < state2; state1++)
+        for(int output = 0; output < outputs; output++)
+          if(outputsMatrix[state1][output] != outputsMatrix[state2][output])
+            implicationChart[implicationChartRowIndex(state2, states)][state1] = INCOMPATIBLE;
+
+    if(mode == GUIDED) guidedMode(states, implicationChart);
+
+    for(int state2 = states - 1; state2 > 0; state2--)
+      for(int state1 = 0; state1 < state2; state1++)
+        if(implicationChart[implicationChartRowIndex(state2, states)][state1] == UNKNOWN) {
+          for(int input = 0; input < inputs; input++)
+            if(implicationChart[implicationChartRowIndex(nextStatesMatrix[state2][input], states)][nextStatesMatrix[state1][input]] == INCOMPATIBLE) {
+              implicationChart[implicationChartRowIndex(state2, states)][state1] = INCOMPATIBLE;
+              break;
+            }
+        }
+
+    for(int state1 = 0; state1 < states; state1++)
+      for(int state2 = 0; state2 < states; state2++)
+        if(implicationChart[state2][state1] == UNKNOWN)
+          implicationChart[state2][state1] = COMPATIBLE;
+
+    if(mode == GUIDED) guidedMode(states, implicationChart);
+
+
+
+    answer(states, implicationChart);
+  }
+
+  private static void guidedMode(int states, int[][] implicationChart)
+  {
+    clear();
+    System.out.println("\t S0 S1 ... S(N - 1)  ----->");
+    System.out.println("| SN");
+    System.out.println("| S(N-1)");
+    System.out.println("| ...");
+    System.out.println("| S1");
+    System.out.println("V");
+    for(int state2 = states - 1; state2 > 0; state2--) {
+      System.out.print("\t ");
+      for(int state1 = 0; state1 < state2; state1++)
+        System.out.print(replace(implicationChart[implicationChartRowIndex(state2, states)][state1]) + " ");
+      System.out.println();
+    }
+    System.out.println();
+  }
+
+  private static void answer(int states, int[][] implicationChart)
+  {
+    boolean[] writtenStates = new boolean[states];
+    for(int i = 0; i < states; i++) writtenStates[i] = false;
+
+    System.out.print("\nAnswer: ");
+    for(int state1 = 0; state1 < states; state1++) {
+      boolean first = true;
+      for(int state2 = states - 1; state2 > state1; state2--)
+        if(implicationChart[implicationChartRowIndex(state2, states)][state1] == COMPATIBLE) {
+          if(first && !writtenStates[state1]) { System.out.print("( S" + state1 + " "); first = false; writtenStates[state1] = true; }
+          if(!writtenStates[state2]) System.out.print("S" + state2 + " "); writtenStates[state2] = true;
+        }
+      if(!first) System.out.print(") ");
+    }
+
+    for(int i = 0; i < states; i++)
+      if(!writtenStates[i]) System.out.print("( S" + i + " ) ");
+
+    System.out.println();
+  }
+
+  private static char replace(int compatibility)
+  {
+    switch(compatibility) {
+      case INCOMPATIBLE:
+        return 'I';
+      case COMPATIBLE:
+        return 'C';
+      default:
+        return 'U';
+    }
+  }
+
+  private static int implicationChartRowIndex(int state, int states)
+  {
+    return (states - 1) - state;
   }
 
   private static char modeSelection(String[] args)
@@ -77,6 +172,12 @@ public class PartitionMethod
       System.out.println("Selected normal mode by default.");
     return NORMAL;
   }
+
+  public static void clear()
+  {
+    System.out.print("\033[H\033[2J");
+    System.out.flush();
+   }
 
   private static void usage()
   {
