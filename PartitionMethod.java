@@ -45,10 +45,8 @@ public class PartitionMethod
 
     int[][] nextStatesMatrix  = new int[states][inputs];
     int[][] outputsMatrix     = new int[states][outputs];
-
     obj = extractDataFromFile(fileLines, nextStatesMatrix, inputs, outputsMatrix, outputs);
     nextStatesMatrix = (int[][])obj[0]; outputsMatrix = (int[][])obj[1];
-
 
     int[][] implicationChart = new int[states][states];
     implicationChart = buildImplicationChart(states, implicationChart, mode);
