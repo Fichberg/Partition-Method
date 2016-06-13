@@ -66,23 +66,16 @@ public class PartitionMethod
     }
 
     int[][] implicationChart = new int[states][states];
-    for(int state1 = 0; state1 < states; state1++)
-      for(int state2 = 0; state2 < states; state2++)
-        implicationChart[state2][state1] = UNKNOWN;
+    implicationChart = buildImplicationChart(states, implicationChart, mode);
+    implicationChart = partitionateBasedOnOutput(states, implicationChart, outputsMatrix, outputs, mode);
+    implicationChart = partitionateBasedOnNextStates(states, implicationChart, nextStatesMatrix, inputs, mode);
+    answer(states, implicationChart);
+  }
 
-    if(mode == GUIDED) guidedMode(states, implicationChart);
-
-    //do partition based on outputs
-    for(int state2 = states - 1; state2 > 0; state2--)
-      for(int state1 = 0; state1 < state2; state1++)
-        for(int output = 0; output < outputs; output++)
-          if(outputsMatrix[state1][output] != outputsMatrix[state2][output]) {
-            implicationChart[implicationChartRowIndex(state2, states)][state1] = INCOMPATIBLE;
-          }
-
-    if(mode == GUIDED) guidedMode(states, implicationChart);
-
+  private static int[][] partitionateBasedOnNextStates(int states, int[][] implicationChart, int[][] nextStatesMatrix, int inputs, char mode)
+  {
     boolean restart = true, changed;
+
     while(restart) {
       changed = false;
       for(int state2 = states - 1; state2 > 0; state2--) {
@@ -112,7 +105,31 @@ public class PartitionMethod
 
     if(mode == GUIDED) guidedMode(states, implicationChart);
 
-    answer(states, implicationChart);
+    return implicationChart;
+  }
+
+  private static int[][] partitionateBasedOnOutput(int states, int[][] implicationChart, int[][] outputsMatrix, int outputs, char mode)
+  {
+    for(int state2 = states - 1; state2 > 0; state2--)
+      for(int state1 = 0; state1 < state2; state1++)
+        for(int output = 0; output < outputs; output++)
+          if(outputsMatrix[state1][output] != outputsMatrix[state2][output])
+            implicationChart[implicationChartRowIndex(state2, states)][state1] = INCOMPATIBLE;
+
+    if(mode == GUIDED) guidedMode(states, implicationChart);
+
+    return implicationChart;
+  }
+
+  private static int[][] buildImplicationChart(int states, int[][] implicationChart, char mode)
+  {
+    for(int state1 = 0; state1 < states; state1++)
+    for(int state2 = 0; state2 < states; state2++)
+    implicationChart[state2][state1] = UNKNOWN;
+
+    if(mode == GUIDED) guidedMode(states, implicationChart);
+
+    return implicationChart;
   }
 
   private static void guidedMode(int states, int[][] implicationChart)
