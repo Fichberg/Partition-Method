@@ -3,6 +3,8 @@ JC = javac
 .SUFFIXES: .java .class
 .java.class:
 	$(JC) $(JFLAGS) $*.java
+	echo Main-Class: PartitionMethod > MANIFEST.MF
+	jar -cvmf MANIFEST.MF PartitionMethod.jar PartitionMethod.class
 
 CLASSES = \
 	PartitionMethod.java
@@ -12,3 +14,4 @@ clean:
 	$(RM) *.class
 	$(RM) *.log
 	$(RM) *.aux
+	$(RM) *.MF
