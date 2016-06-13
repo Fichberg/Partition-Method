@@ -37,16 +37,30 @@ public class PartitionMethod
 
   private static void partitionMethod(List<String> fileLines, char mode)
   {
+    Object[] obj;
     int states  = Integer.valueOf(fileLines.get(0));
     int inputs  = Integer.valueOf(fileLines.get(1));
     int outputs = Integer.valueOf(fileLines.get(2));
     fileLines = fileLines.subList(3, states + 3);
 
-    int row = 0, column;
     int[][] nextStatesMatrix  = new int[states][inputs];
     int[][] outputsMatrix     = new int[states][outputs];
 
+    obj = extractDataFromFile(fileLines, nextStatesMatrix, inputs, outputsMatrix, outputs);
+    nextStatesMatrix = (int[][])obj[0]; outputsMatrix = (int[][])obj[1];
+
+
+    int[][] implicationChart = new int[states][states];
+    implicationChart = buildImplicationChart(states, implicationChart, mode);
+    implicationChart = partitionateBasedOnOutput(states, implicationChart, outputsMatrix, outputs, mode);
+    implicationChart = partitionateBasedOnNextStates(states, implicationChart, nextStatesMatrix, inputs, mode);
+    answer(states, implicationChart);
+  }
+
+  private static Object[] extractDataFromFile(List<String> fileLines, int[][] nextStatesMatrix, int inputs, int[][] outputsMatrix, int outputs)
+  {
     //build matrixes with values
+    int row = 0, column;
     for(String line : fileLines) {
       int start = line.indexOf('('), end = line.indexOf(')');
       String str = line.substring(start + 1, end);
@@ -64,12 +78,7 @@ public class PartitionMethod
 
       row++;
     }
-
-    int[][] implicationChart = new int[states][states];
-    implicationChart = buildImplicationChart(states, implicationChart, mode);
-    implicationChart = partitionateBasedOnOutput(states, implicationChart, outputsMatrix, outputs, mode);
-    implicationChart = partitionateBasedOnNextStates(states, implicationChart, nextStatesMatrix, inputs, mode);
-    answer(states, implicationChart);
+    return new Object[]{nextStatesMatrix, outputsMatrix};
   }
 
   private static int[][] partitionateBasedOnNextStates(int states, int[][] implicationChart, int[][] nextStatesMatrix, int inputs, char mode)
